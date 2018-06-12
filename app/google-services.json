@@ -1,0 +1,107 @@
+{
+  "project_info": {
+    "project_number": "927854013332",
+    "firebase_url": "https://driveappeal-5a064.firebaseio.com",
+    "project_id": "driveappeal-5a064",
+    "storage_bucket": "driveappeal-5a064.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:927854013332:android:1c96feb24d1b504e",
+        "android_client_info": {
+          "package_name": "com.example.simeonm.da"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "927854013332-j0gfaikjfdshggba9sqvj3h3q7h9oh60.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.simeonm.da",
+            "certificate_hash": "4602711cd2831e63d07ad8ad50ccc053ad016ef3"
+          }
+        },
+        {
+          "client_id": "927854013332-u0fu9a7urh79ipk9ikuhjkjeo8qapqnr.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "927854013332-u0fu9a7urh79ipk9ikuhjkjeo8qapqnr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBX4hlirfKWGu2ypeZUOAdUo5B3A2w6dVM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "927854013332-u0fu9a7urh79ipk9ikuhjkjeo8qapqnr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:927854013332:android:ecef19f1601a8800",
+        "android_client_info": {
+          "package_name": "com.example.simeonm.driveappeal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "927854013332-iee2hu78q5d56mh55r9e2bc0a6ahmlum.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.simeonm.driveappeal",
+            "certificate_hash": "4602711cd2831e63d07ad8ad50ccc053ad016ef3"
+          }
+        },
+        {
+          "client_id": "927854013332-u0fu9a7urh79ipk9ikuhjkjeo8qapqnr.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "927854013332-u0fu9a7urh79ipk9ikuhjkjeo8qapqnr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBX4hlirfKWGu2ypeZUOAdUo5B3A2w6dVM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "927854013332-u0fu9a7urh79ipk9ikuhjkjeo8qapqnr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
