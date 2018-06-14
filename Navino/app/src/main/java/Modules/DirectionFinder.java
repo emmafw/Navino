@@ -22,7 +22,7 @@ import java.util.List;
 
 public class DirectionFinder {
     private static final String DIRECTION_URL_API = "https://maps.googleapis.com/maps/api/directions/json?";
-    private static final String GOOGLE_API_KEY = "AIzaSyDnwLF2-WfK8cVZt9OoDYJ9Y8kspXhEHfI";
+    private static final String GOOGLE_API_KEY = "AIzaSyBhOsnSOFGfZiAZkdlLGqrtmKW57AmAz5g";
     private DirectionFinderListener listener;
     private String origin;
     private String destination;
@@ -101,10 +101,71 @@ public class DirectionFinder {
             JSONObject jsonEndLocation = jsonLeg.getJSONObject("end_location");
             JSONObject jsonStartLocation = jsonLeg.getJSONObject("start_location");
             JSONArray jsonSteps = jsonLeg.getJSONArray("steps");
-            List<String> direct = new ArrayList<String>();
+            List<Instruct> direct = new ArrayList<Instruct>();
             for (int b = 0; b < jsonSteps.length(); b++) {
                 JSONObject Step = jsonSteps.getJSONObject(b);
-                direct.add(Step.getString("html_instructions"));
+                if (b == 0){
+                    JSONObject jsonSEL = Step.getJSONObject("end_location");
+                    JSONObject jsonSD = Step.getJSONObject("distance");
+                    Distance SD = new Distance(jsonSD.getString("text"), jsonSD.getInt("value"));
+                    Double SELlat = jsonSEL.getDouble("lat");
+                    Double SELlng = jsonSEL.getDouble("lng");
+                    LatLng Spoint = new LatLng(SELlat, SELlng);
+                    direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
+                }
+                else
+                {
+                    JSONObject jsonSEL = Step.getJSONObject("end_location");
+                    JSONObject jsonSD = Step.getJSONObject("distance");
+                    Distance SD = new Distance(jsonSD.getString("text"), jsonSD.getInt("value"));
+                    String SDD = jsonSD.getString("text");
+                    Double SELlat = jsonSEL.getDouble("lat");
+                    Double SELlng = jsonSEL.getDouble("lng");
+
+
+                    JSONObject jsonSSL = Step.getJSONObject("start_location");
+                    Double SSLlat = jsonSSL.getDouble("lat");
+                    Double SSLlng = jsonSSL.getDouble("lng");
+                    Double Midlat = SELlat - SSLlat;
+                    Double Midlng = SELlng - SSLlng;
+                    LatLng SMpoint = new LatLng(Midlat, Midlat);
+                    Boolean ft = false;
+                    Boolean mi = false;
+                    LatLng Spoint = new LatLng(SELlat, SELlng);
+                    ft = SDD.contains("ft");
+                    mi = SDD.contains("mi");
+                    SDD = SDD.replace(" ft", "");
+                    SDD = SDD.replace(" mi", "");
+                    double result = 4;
+                    try {
+                        result = Double.parseDouble(SDD);
+
+                    } catch(NumberFormatException nfe) {
+                        // Handle parse error.
+                    }
+
+                   result = result / 2;
+
+                   String numberAsString = String.valueOf(result);
+                   String in =  Step.getString("html_instructions");
+                    String all = "";
+                   if(mi)
+                   {
+                      all = "In "+ numberAsString + " mi " + in;
+                   }
+                   else if(ft)
+                   {
+                       all = "In " + numberAsString + " ft " + in;
+                   }
+                   else
+                   {
+                       all = "In " + numberAsString + " ft " + in;
+                   }
+
+                   direct.add(new Instruct(all, SMpoint, SD));
+                   direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
+
+                }
 
             }
             route.directions = direct;

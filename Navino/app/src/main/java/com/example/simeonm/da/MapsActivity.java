@@ -1,5 +1,30 @@
 package com.example.simeonm.da;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -12,6 +37,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -19,6 +45,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,6 +93,8 @@ import Modules.Route;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {
 
+    private FirebaseAuth mAuth;
+    private GoogleSignInClient mGoogleSignInClient;
     private GoogleMap mMap;
     private UiSettings mUiSettings;
     private double lat, lon;
@@ -85,11 +114,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Projection projection;
     private LatLng latLng, latLngSource, latLngDestination;
     private DirectionFinderListener listener;
-    private TextView txtGo;
+    private TextView txtGo, txtNav;
+    LinearLayout navi;
     String text;
+    TextToSpeech t1;
+    TextView textDir;
     private ArrayList<Marker> originMarkers, destinationMarkers;
     private ArrayList<Polyline> polylinePaths;
     private ProgressDialog progressDialog;
+    List<String> ldir = new ArrayList<String>();
+    List<LatLng> dir = new ArrayList<LatLng>();
+    int ldiri = 0;
+    int diri = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,19 +135,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        /*if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            buildAlertMessageNoGPS();
-        }
-        else if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            buildAlertMessageNoGps();
+
+        } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             getLocation();
-        }*/
+
+        }
+        textDir= (TextView)findViewById(R.id.textDir);
+        textDir.setText("");
+        mAuth = FirebaseAuth.getInstance();
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        // [END configure_signin]
+
+        // [START build_client]
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        // [END build_client]
+        TextView logout = (TextView)findViewById(R.id.textSignout);
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mGoogleSignInClient.signOut();
+                startActivity(new Intent(MapsActivity.this, MainActivity.class));
+
+            }
+        });
+        navi = (LinearLayout) findViewById(R.id.navi);
+        navi.setVisibility(View.GONE);
         placeAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
         placeAutocompleteFragment.setFilter(new AutocompleteFilter.Builder().setCountry("USA").build());
         placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
                 LatLng loc = place.getLatLng();
-                if (marker!=null){
+                if (marker != null) {
                     marker.remove();
                 }
                 marker = mMap.addMarker(new MarkerOptions().position(loc));
@@ -120,52 +182,105 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 YoYo.with(Techniques.FadeIn).playOn(llMarkerDroppedContainer);
                 llMapActionContainer.setVisibility(View.INVISIBLE);
                 llSaveClearContainer.setVisibility(View.INVISIBLE);
+                txtNav.setVisibility(View.GONE);
+                txtGo.setVisibility(View.VISIBLE);
+                t1.stop();
+                navi.setVisibility(View.GONE);
             }
 
             @Override
             public void onError(Status status) {
-                Toast.makeText(MapsActivity.this, ""+status.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(MapsActivity.this, "" + status.toString(), Toast.LENGTH_SHORT).show();
             }
+
+
         });
         llMapActionContainer = (LinearLayout) findViewById(R.id.llMapActionContainer);
         llSaveClearContainer = (LinearLayout) findViewById(R.id.llSaveOrClearContainer);
         flMapContainer = (FrameLayout) findViewById(R.id.flMapContainer);
         llMarkerDroppedContainer = (LinearLayout) findViewById(R.id.llMarkerDropedContainer);
         txtGo = (TextView) findViewById(R.id.textGO);
-
+        txtNav = (TextView) findViewById(R.id.textNav);
         drawingPanel = new DrawingPanel(this);
+
+        txtNav.setVisibility(View.GONE);
         drawingPanel.setVisibility(View.GONE);
         drawingPanel.setBackgroundColor(Color.TRANSPARENT);
         flMapContainer.addView(drawingPanel);
-
+        t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status != TextToSpeech.ERROR) {
+                    t1.setLanguage(Locale.ENGLISH);
+                }
+            }
+        });
         txtGo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 System.out.println("Sending request...");
                 sendRequest();
+                txtGo.setVisibility(View.GONE);
+                txtNav.setVisibility(View.VISIBLE);
             }
         });
+
+
+        txtNav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (txtNav.getText().equals("Navigate")) {
+                    txtNav.setText("End Navigation");
+                    textDir.setText(text);
+                    navi.setVisibility(View.VISIBLE);
+                    t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+
+
+
+                } else {
+                    t1.stop();
+                    navi.setVisibility(View.INVISIBLE);
+                    txtNav.setText("Navigate");
+                }
+            }
+        });
+
+
+    }
+
+    private void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Please Turn ON your GPS Connection")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == 200)
-        {
-            if(resultCode == RESULT_OK)
-            {
-                try
-                {
+        if (requestCode == 200) {
+            if (resultCode == RESULT_OK) {
+                try {
                     Place place = PlaceAutocomplete.getPlace(this, data);
                     String name = place.getName().toString();
 
                     latLngSource = place.getLatLng();
-                    if(sourceMarker!=null)
-                    {
+                    if (sourceMarker != null) {
                         sourceMarker.remove();
                     }
 
-                    CameraUpdate updateSource = CameraUpdateFactory.newLatLngZoom(latLngSource,15);
+                    CameraUpdate updateSource = CameraUpdateFactory.newLatLngZoom(latLngSource, 15);
                     mMap.moveCamera(updateSource);
 
 
@@ -173,32 +288,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     optionsSource.title("Current Location");
                     optionsSource.position(latLngSource);
                     sourceMarker = mMap.addMarker(optionsSource);
-                }catch(Exception e)
-                {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
 
-
             }
-        }
-        else if(requestCode == 400)
-        {
-            if(resultCode == RESULT_OK)
-            {
+        } else if (requestCode == 400) {
+            if (resultCode == RESULT_OK) {
 
-                try
-                {
-                    Place place = PlaceAutocomplete.getPlace(this,data);
+                try {
+                    Place place = PlaceAutocomplete.getPlace(this, data);
                     latLngDestination = place.getLatLng();
                     String name = place.getName().toString();
 
                     txtGo.setText(name);
-                    if(destinationMarker!=null)
-                    {
+                    if (destinationMarker != null) {
                         destinationMarker.remove();
                     }
-                    CameraUpdate updateSource = CameraUpdateFactory.newLatLngZoom(latLngDestination,15);
+                    CameraUpdate updateSource = CameraUpdateFactory.newLatLngZoom(latLngDestination, 15);
                     mMap.moveCamera(updateSource);
 
                     MarkerOptions optionsSource = new MarkerOptions();
@@ -219,8 +327,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     sb.append("&alternatives=true");
 
 
-                }catch(Exception e)
-                {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -244,37 +351,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             Location location1 = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            Location location2 = locationManager.getLastKnownLocation(LocationManager. PASSIVE_PROVIDER);
+            Location location2 = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 
-            if(location != null) {
+            if (location != null) {
                 lat = location.getLatitude();
                 lon = location.getLongitude();
                 latitude = String.valueOf(lat);
                 longitude = String.valueOf(lon);
 
-            } if (location1 != null) {
-                lat = location1.getLatitude();
-                lon  = location1.getLongitude();
-                latitude = String.valueOf(lat);
-                longitude = String.valueOf(lon);
-
-
-
-
-            } else  if (location2 != null) {
-                lat = location2.getLatitude();
-                lon  = location2.getLongitude();
-                latitude = String.valueOf(lat);
-                longitude = String.valueOf(lon);
-
-
-
             }
+            if (location1 != null) {
+                lat = location1.getLatitude();
+                lon = location1.getLongitude();
+                latitude = String.valueOf(lat);
+                longitude = String.valueOf(lon);
 
 
-            else{
+            } else if (location2 != null) {
+                lat = location2.getLatitude();
+                lon = location2.getLongitude();
+                latitude = String.valueOf(lat);
+                longitude = String.valueOf(lon);
 
-                Toast.makeText(this,"Unble to Trace your location",Toast.LENGTH_SHORT).show();
+
+            } else {
+
+                Toast.makeText(this, "Unble to Trace your location", Toast.LENGTH_SHORT).show();
 
             }
         }
@@ -282,30 +384,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     protected void buildAlertMessageNoGPS() {
 
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Please Turn ON your GPS Connection")
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        dialog.cancel();
-                    }
-                });
-        final AlertDialog alert = builder.create();
-        alert.show();
+
     }
 
 
     private void sendRequest() {
         String destination = getAddress(marker.getPosition().latitude, marker.getPosition().longitude);
-        System.out.println("DESTINATION IS: "+destination);
+        System.out.println("DESTINATION IS: " + destination);
 
-        String origin = getAddress(lat, lon );
-        System.out.println("ORIGIN IS: "+origin);
+        String origin = getAddress(lat, lon);
+        System.out.println("ORIGIN IS: " + origin);
 
         try {
             new DirectionFinder(this, origin, destination).execute();
@@ -315,6 +403,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             e.printStackTrace();
         }
     }
+
     public String getAddress(double lat, double lng) {
         Geocoder geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
         String add = null;
@@ -341,6 +430,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         return add;
     }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -348,10 +438,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mUiSettings = mMap.getUiSettings();
         mUiSettings.setMyLocationButtonEnabled(true);
         mUiSettings.setZoomControlsEnabled(true);
-        lat = 42.285;
-        lon = -71.11;
         LatLng current = new LatLng(lat, lon);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 18));
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         mMap.setMyLocationEnabled(true);
 
         mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
@@ -433,6 +531,78 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    public void onLocationChanged(Location location) {
+
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
+        ;
+        LatLng myLatLng = new LatLng(latitude, longitude);
+        double dirlat = Math.round(dir.get(diri).latitude * 10000.0);
+        double dirlng = Math.round(dir.get(diri).longitude * 10000.0);
+        double dirlat1;
+        double dirlng1;
+        Boolean dirlatcheck = false;
+        Boolean dirlngcheck = false;
+        if(dirlat < dir.get(diri).latitude)
+        {
+            dirlat1 = dirlat + .0001;
+            dirlatcheck = (myLatLng.latitude >= dirlat) && (myLatLng.latitude <= dirlat1);
+        }
+        else
+        {
+            dirlat1 = dirlat - .0001;
+            dirlatcheck = (myLatLng.latitude <= dirlat) && (myLatLng.latitude >= dirlat1);
+        }
+
+        if(dirlng < dir.get(diri).longitude)
+        {
+            dirlng1 = dirlng + .0001;
+            dirlngcheck = (myLatLng.longitude >= dirlng) && (myLatLng.latitude <= dirlng1);
+        }
+        else
+        {
+            dirlng1 = dirlng - .0001;
+            dirlngcheck = (myLatLng.longitude <= dirlng) && (myLatLng.latitude >= dirlng1);
+        }
+
+
+        if(dirlatcheck && dirlngcheck)
+        {
+
+            text = ldir.get(ldiri);
+            text = text.replace("</b>", "");
+            text = text.replace("<b>", "");
+            text = text.replace("<div style=", "");
+            text = text.replace("font-size:0.9em", "");
+            text = text.replace(">", "");
+            text = text.replace("</div", "");
+            text = text.replace("</div]]", "");
+            text = text.replace("[[", "");
+            text = text.replace("&nbsp", "");
+            text = text.replace("]", "");
+            text = text.replace("[", "");
+            text = text.replace("Destination w", "\n"+"\n"+"Destination w");
+            text = text.replace(",", "\n"+"\n");
+
+            diri = diri + 1;
+            ldiri = ldiri + 1;
+        }
+
+
+        moveToCurrentLocation(myLatLng);
+
+    }
+
+    private void moveToCurrentLocation(LatLng currentLocation)
+    {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
+        // Zoom in, animating the camera.
+        mMap.animateCamera(CameraUpdateFactory.zoomIn());
+        // Zoom out to zoom level 10, animating with a duration of 2 seconds.
+
+
+    }
+
 
     @Override
     public void onDirectionFinderStart() {
@@ -468,10 +638,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         polylinePaths = new ArrayList<>();
         originMarkers = new ArrayList<>();
         destinationMarkers = new ArrayList<>();
-        List<String> ldir = new ArrayList<String>();
+
 
         for (Route route : routes) {
-           ldir.add(route.directions.toString());
+            for(int i = 0; i < route.directions.size(); i++)
+            {
+                ldir.add(route.directions.get(i).getDirection());
+                dir.add(route.directions.get(i).point);
+            }
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
@@ -496,7 +670,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             polylinePaths.add(mMap.addPolyline(polylineOptions));
         }
 
-        text = ldir.toString();
+        text = ldir.get(ldiri);
         text = text.replace("</b>", "");
         text = text.replace("<b>", "");
         text = text.replace("<div style=", "");
@@ -591,5 +765,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // [START on_start_sign_in]
+        // Check for existing Google Sign In account, if the user is already signed in
+        // the GoogleSignInAccount will be non-null.
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if(account == null)
+        {
+            startActivity(new Intent( MapsActivity.this, MainActivity.class));
+        }
+        t1.stop();
+        // [END on_start_sign_in]
+    }
 
 }
