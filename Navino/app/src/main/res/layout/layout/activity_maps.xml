@@ -1,0 +1,234 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/topPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <fragment
+            android:id="@+id/place_autocomplete_fragment"
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="2" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/topPanel"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <FrameLayout
+                android:id="@+id/flMapContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <fragment
+                    android:layout_below="@+id/topPanel"
+                    android:id="@+id/map"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    tools:context=".Navino" />
+
+                <LinearLayout
+                    android:id="@+id/navi"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_weight="5"
+                    android:orientation="horizontal"
+                    tools:ignore="RtlCompat">
+
+                    <TextView
+                        android:id="@+id/textDir"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="#7a3369e8"
+                        android:gravity="center_horizontal"
+                        android:text="TextView"
+                        android:textColor="@android:color/background_light"
+                        android:textSize="30sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llMapActionContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:alpha="0"
+                    android:background="@drawable/input_roundedcorner"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    android:layout_gravity="bottom"
+                    android:baselineAligned="false">
+
+                    <TextView
+                        android:id="@+id/textAddKnownArea"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:onClick="onAddKnownAreaClick"
+                        android:padding="8dp"
+                        android:text="Add Known Area"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/textSignout"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:padding="8dp"
+                        android:text="Sign out"
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"
+                        />
+
+
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/llSaveOrClearContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:alpha="0"
+                    android:background="@drawable/input_roundedcorner"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    android:layout_gravity="center|bottom">
+
+                    <TextView
+                        android:id="@+id/textSaveDraw"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:onClick="onSaveDrawingClick"
+                        android:padding="8dp"
+                        android:text="Save Area"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/textClearDraw"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:onClick="onClearDrawingClick"
+                        android:padding="8dp"
+                        android:text="Clear Area"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/gray_e8">
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llMarkerDropedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:alpha="0"
+                    android:background="@drawable/input_roundedcorner"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    android:layout_gravity="bottom"
+                    android:baselineAligned="false">
+
+                    <TextView
+                        android:id="@+id/textSmallAddKnownArea"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:onClick="onAddKnownAreaClick"
+                        android:padding="8dp"
+                        android:text="Add Known Area"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/gray_e8">
+
+                        <TextView
+                            android:id="@+id/textGO2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="5dp"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:gravity="center_horizontal"
+                            android:padding="8dp"
+                            android:text="GO"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textGO"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:padding="8dp"
+                        android:text="GO"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/textNav"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:padding="8dp"
+                        android:text="Navigate"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+            </FrameLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+</RelativeLayout>

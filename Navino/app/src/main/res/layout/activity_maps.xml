@@ -45,23 +45,24 @@
                     tools:context=".Navino" />
 
                 <LinearLayout
-                    android:id="@+id/navi"
+                    android:id="@+id/llNavDir"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="100dp"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"
                     android:layout_weight="5"
                     android:orientation="horizontal"
-                    tools:ignore="RtlCompat">
+                    tools:ignore="RtlCompat"
+                    android:visibility="gone">
 
                     <TextView
                         android:id="@+id/textDir"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#7a3369e8"
-                        android:gravity="center_horizontal"
+                        android:background="#3369e8"
+                        android:gravity="center_vertical|center_horizontal"
                         android:text="TextView"
                         android:textColor="@android:color/background_light"
                         android:textSize="30sp" />
@@ -90,11 +91,22 @@
                         android:onClick="onAddKnownAreaClick"
                         android:padding="8dp"
                         android:text="Add Known Area"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
+
+                    <LinearLayout
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/gray_e8">
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/textSignout"
-                        android:layout_width="150dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_margin="5dp"
                         android:layout_weight="1"
@@ -104,8 +116,7 @@
                         android:text="Sign out"
                         android:textSize="14sp"
                         android:background="#3369e8"
-                        android:textColor="@android:color/background_light"
-                        />
+                        android:textColor="@android:color/background_light" />
 
 
                 </LinearLayout>
@@ -131,7 +142,18 @@
                         android:onClick="onSaveDrawingClick"
                         android:padding="8dp"
                         android:text="Save Area"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
+
+                    <LinearLayout
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/gray_e8">
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/textClearDraw"
@@ -144,16 +166,9 @@
                         android:onClick="onClearDrawingClick"
                         android:padding="8dp"
                         android:text="Clear Area"
-                        android:textSize="14sp" />
-
-                    <LinearLayout
-                        android:layout_width="1dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginBottom="8dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@color/gray_e8">
-
-                    </LinearLayout>
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
 
                 </LinearLayout>
 
@@ -176,11 +191,13 @@
                         android:layout_margin="5dp"
                         android:layout_weight="1"
                         android:clickable="true"
+                        android:onClick="onMarkerAddKnownAreaClick"
                         android:gravity="center_horizontal"
-                        android:onClick="onAddKnownAreaClick"
                         android:padding="8dp"
                         android:text="Add Known Area"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
 
                     <LinearLayout
                         android:layout_width="1dp"
@@ -188,19 +205,8 @@
                         android:layout_marginBottom="8dp"
                         android:layout_marginTop="8dp"
                         android:background="@color/gray_e8">
-
-                        <TextView
-                            android:id="@+id/textGO2"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="5dp"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:gravity="center_horizontal"
-                            android:padding="8dp"
-                            android:text="GO"
-                            android:textSize="14sp" />
                     </LinearLayout>
+
 
                     <TextView
                         android:id="@+id/textGO"
@@ -210,21 +216,90 @@
                         android:layout_weight="1"
                         android:clickable="true"
                         android:gravity="center_horizontal"
+                        android:onClick="onFindDirectionsClick"
                         android:padding="8dp"
-                        android:text="GO"
-                        android:textSize="14sp" />
+                        android:text="Find Directions"
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llDirectionsFoundContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:alpha="0"
+                    android:background="@drawable/input_roundedcorner"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    android:layout_gravity="bottom"
+                    android:baselineAligned="false">
 
                     <TextView
-                        android:id="@+id/textNav"
+                        android:id="@+id/ClearDirections"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_margin="5dp"
                         android:layout_weight="1"
                         android:clickable="true"
                         android:gravity="center_horizontal"
+                        android:onClick="onClearDirectionsClick"
                         android:padding="8dp"
-                        android:text="Navigate"
-                        android:textSize="14sp" />
+                        android:text="Clear"
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
+
+                    <LinearLayout
+                        android:layout_width="1dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/gray_e8">
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/Go"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:onClick="onGoClick"
+                        android:padding="8dp"
+                        android:text="GO"
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/llDirectionsStartedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:alpha="0"
+                    android:background="@drawable/input_roundedcorner"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    android:layout_gravity="bottom"
+                    android:baselineAligned="false">
+                    <TextView
+                        android:id="@+id/Stop"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="5dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:gravity="center_horizontal"
+                        android:onClick="onStopDirectionsClick"
+                        android:padding="8dp"
+                        android:text="Stop Directions"
+                        android:textSize="14sp"
+                        android:background="#3369e8"
+                        android:textColor="@android:color/background_light"/>
                 </LinearLayout>
 
             </FrameLayout>
