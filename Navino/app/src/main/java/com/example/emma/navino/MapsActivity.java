@@ -10,7 +10,9 @@ import android.graphics.Point;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.provider.ContactsContract;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -18,7 +20,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,19 +56,28 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.SphericalUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {
 
+    private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
     private GoogleMap mMap;
     private GoogleSignInClient mGoogleSignInClient;
@@ -80,7 +93,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private UiSettings mUiSettings;
     private Marker marker, sourceMarker, destinationMarker;
     private LatLngBounds latLngBounds, bounds;
-    private double lat, lon, maxDistanceFromCenter;
+    private double lat, lon, maxDistanceFromCenter, nLat, nLon, sLat, sLon;
     private String latitude, longitude, text;
     private DrawingPanel drawingPanel;
     private Projection projection;
@@ -91,9 +104,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ProgressDialog progressDialog;
     private ArrayList<Polyline> polylinePaths;
     private ArrayList<Marker> originMarkers, destinationMarkers;
-    private int ldiri= 0, diri=0;
+    private int ldiri = 0, diri = 0;
     private List<String> ldir = new ArrayList<String>();
     private List<LatLng> dir = new ArrayList<LatLng>();
+    private ImageButton clear;
+    private List<LatLngBounds> userBounds = new ArrayList<LatLngBounds>();
+    private boolean inKnownArea;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,11 +120,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        inKnownArea = false;
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             //buildAlertMessageNoGps();
-        }
-        else if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+        } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             getLocation();
         }
 
@@ -117,8 +134,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-        //mUser
+        mUser = GoogleSignIn.getLastSignedInAccount(this);
 
+        mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
         placeAutocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
@@ -127,7 +145,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPlaceSelected(Place place) {
                 LatLng loc = place.getLatLng();
-                if(marker != null){
+                if (marker != null) {
                     marker.remove();
                 }
                 marker = mMap.addMarker(new MarkerOptions().position(loc));
@@ -153,6 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         llTopPanelContainer = (LinearLayout) findViewById(R.id.topPanel);
         flMapContainer = (FrameLayout) findViewById(R.id.flMapContainer);
         txtDirections = (TextView) findViewById(R.id.textDir);
+        clear = (ImageButton) findViewById(R.id.place_autocomplete_clear_button);
 
         txtDirections.setText("");
 
@@ -164,9 +183,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
-                if (status != TextToSpeech.ERROR){
+                if (status != TextToSpeech.ERROR) {
                     t1.setLanguage(Locale.ENGLISH);
                 }
+            }
+        });
+
+        clear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                placeAutocompleteFragment.setText("");
+                mMap.clear();
+                getLocation();
+                llMarkerDroppedContainer.setVisibility(View.GONE);
+                llMapActionContainer.setVisibility(View.VISIBLE);
+                YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
+                LatLng current = new LatLng(lat, lon);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 18));
             }
         });
 
@@ -248,9 +281,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    public void onAddKnownAreaClick(View view){
+    public void onAddKnownAreaClick(View view) {
         llMapActionContainer.setVisibility(View.GONE);
-        if(latLngs != null){
+        if (latLngs != null) {
             latLngs.clear();
         }
         drawingPanel.setVisibility(View.VISIBLE);
@@ -260,54 +293,52 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llSaveClearContainer);
     }
 
-    public void onSignoutClick(View view){
+    public void onSignoutClick(View view) {
         mGoogleSignInClient.signOut();
         //finish implementing once added homescreen
     }
 
-    public void onSaveDrawingClick(View view){
+    public void onSaveDrawingClick(View view) throws InterruptedException {
         Marker temp = null;
         latLngBounds = toBounds(latLng, maxDistanceFromCenter);
         llSaveClearContainer.setVisibility(View.GONE);
-        if(marker != null){
+        if (marker != null) {
             temp = marker;
             llMarkerDroppedContainer.setVisibility(View.VISIBLE);
             YoYo.with(Techniques.FadeIn).playOn(llMarkerDroppedContainer);
             mMap.clear();
             mMap.addMarker(new MarkerOptions().position(temp.getPosition()));
-        }
-        else{
+        } else {
             llMapActionContainer.setVisibility(View.VISIBLE);
             YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
             mMap.clear();
         }
         marker = temp;
-        UUID knownAreaID = UUID.randomUUID();
-        String email = mUser.getEmail();
-        //add to FIREBASE
+        KnownArea knownArea = new KnownArea(latLngBounds.northeast.latitude, latLngBounds.northeast.longitude,
+                latLngBounds.southwest.latitude, latLngBounds.southwest.longitude);
+        mDatabase.child(mUser.getId()).push().setValue(knownArea);
     }
 
-    public void onClearDrawingClick(View view){
+    public void onClearDrawingClick(View view) {
         Marker temp = null;
         llSaveClearContainer.setVisibility(View.GONE);
-        if(marker != null){
+        if (marker != null) {
             temp = marker;
             llMarkerDroppedContainer.setVisibility(View.VISIBLE);
             YoYo.with(Techniques.FadeIn).playOn(llMarkerDroppedContainer);
             mMap.clear();
             mMap.addMarker(new MarkerOptions().position(temp.getPosition()));
-        }
-        else{
+        } else {
             llMapActionContainer.setVisibility(View.VISIBLE);
             YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
             mMap.clear();
         }
-        marker=temp;
+        marker = temp;
     }
 
-    public void onMarkerAddKnownAreaClick(View view){
+    public void onMarkerAddKnownAreaClick(View view) {
         llMarkerDroppedContainer.setVisibility(View.GONE);
-        if(latLngs != null){
+        if (latLngs != null) {
             latLngs.clear();
         }
         drawingPanel.setVisibility(View.VISIBLE);
@@ -318,15 +349,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llSaveClearContainer);
     }
 
-    public void onFindDirectionsClick(View view){
+    public void onFindDirectionsClick(View view) {
         System.out.println("Clicking Find Directions");
         llMarkerDroppedContainer.setVisibility(View.GONE);
         llDirectionsFoundContainer.setVisibility(View.VISIBLE);
         YoYo.with(Techniques.FadeIn).playOn(llDirectionsFoundContainer);
         sendRequest();
+        Query query = mDatabase.orderByChild(mUser.getId());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()){
+                    for (DataSnapshot areas : dataSnapshot.getChildren()){
+                        for (DataSnapshot ds : areas.getChildren()){
+                            nLat = (double) ds.child("nLat").getValue();
+                            nLon = (double) ds.child("nLon").getValue();
+                            sLat = (double) ds.child("sLat").getValue();
+                            sLon = (double) ds.child("sLon").getValue();
+                            System.out.println(nLat+" "+nLon+" "+sLat+" "+sLon);
+                            LatLngBounds x = new LatLngBounds(new LatLng(sLat, sLon), new LatLng(nLat, nLon));
+                            userBounds.add(x);
+                        }
+                    }
+                    System.out.println("BOUNDS ARE: "+userBounds.toString());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                //Toast.makeText()
+            }
+        });
     }
 
-    public void onGoClick(View view){
+    public void onGoClick(View view) {
         mMap.setPadding(0, 250, 0, 105);
         llDirectionsFoundContainer.setVisibility(View.GONE);
         llDirectionsStartedContainer.setVisibility(View.VISIBLE);
@@ -335,9 +391,116 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llDirectionsStartedContainer);
         YoYo.with(Techniques.FadeIn).playOn(llNavDirContainer);
         txtDirections.setText(text);
+        //is destination name stored somewhere?
+        t1.speak("Starting Directions to ", TextToSpeech.QUEUE_FLUSH, null);
+        getLocation();
+        LatLng currentLocation = new LatLng(lat, lon);
+        int i = 0;
+        System.out.println(inKnownArea+" "+userBounds.size());
+        while (inKnownArea == false && i < userBounds.size()){
+            LatLngBounds b = userBounds.get(i);
+            if (b.contains(currentLocation)){
+                inKnownArea = true;
+            }
+            i++;
+        }
+        if (inKnownArea){
+            t1.speak("Muting directions until out of known area.", TextToSpeech.QUEUE_ADD, null);
+        }
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                LatLng currentLocation = new LatLng(latitude, longitude);
+                for (int i=0; i<userBounds.size(); i++){
+                    LatLngBounds b = userBounds.get(i);
+                    if (b.contains(currentLocation)){
+                        inKnownArea = true;
+                    }
+                    else{
+                        inKnownArea = false;
+                    }
+                }
+                double dirlat = Math.round(dir.get(diri).latitude * 10000.0);
+                double dirlng = Math.round(dir.get(diri).longitude * 10000.0);
+                double dirlat1;
+                double dirlng1;
+                Boolean dirlatcheck = false;
+                Boolean dirlngcheck = false;
+                if (dirlat < dir.get(diri).latitude) {
+                    dirlat1 = dirlat + .0001;
+                    dirlatcheck = (currentLocation.latitude >= dirlat) && (currentLocation.latitude <= dirlat1);
+                } else {
+                    dirlat1 = dirlat - .0001;
+                    dirlatcheck = (currentLocation.latitude <= dirlat) && (currentLocation.latitude >= dirlat1);
+                }
+
+                if (dirlng < dir.get(diri).longitude) {
+                    dirlng1 = dirlng + .0001;
+                    dirlngcheck = (currentLocation.longitude >= dirlng) && (currentLocation.latitude <= dirlng1);
+                } else {
+                    dirlng1 = dirlng - .0001;
+                    dirlngcheck = (currentLocation.longitude <= dirlng) && (currentLocation.latitude >= dirlng1);
+                }
+
+
+                if (dirlatcheck && dirlngcheck) {
+
+                    text = ldir.get(ldiri);
+                    text = text.replace("</b>", "");
+                    text = text.replace("<b>", "");
+                    text = text.replace("<div style=", "");
+                    text = text.replace("font-size:0.9em", "");
+                    text = text.replace(">", "");
+                    text = text.replace("</div", "");
+                    text = text.replace("</div]]", "");
+                    text = text.replace("[[", "");
+                    text = text.replace("&nbsp", "");
+                    text = text.replace("]", "");
+                    text = text.replace("[", "");
+                    text = text.replace("Destination w", "\n" + "\n" + "Destination w");
+                    text = text.replace(",", "\n" + "\n");
+
+                    diri = diri + 1;
+                    ldiri = ldiri + 1;
+                }
+
+
+                moveToCurrentLocation(currentLocation);
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        });
+
     }
 
     public void onClearDirectionsClick(View view){
+        placeAutocompleteFragment.setText("");
         llDirectionsFoundContainer.setVisibility(View.GONE);
         llMapActionContainer.setVisibility(View.VISIBLE);
         YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
@@ -624,76 +787,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public void onLocationChanged(Location location) {
-
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-        ;
-        LatLng myLatLng = new LatLng(latitude, longitude);
-        double dirlat = Math.round(dir.get(diri).latitude * 10000.0);
-        double dirlng = Math.round(dir.get(diri).longitude * 10000.0);
-        double dirlat1;
-        double dirlng1;
-        Boolean dirlatcheck = false;
-        Boolean dirlngcheck = false;
-        if(dirlat < dir.get(diri).latitude)
-        {
-            dirlat1 = dirlat + .0001;
-            dirlatcheck = (myLatLng.latitude >= dirlat) && (myLatLng.latitude <= dirlat1);
-        }
-        else
-        {
-            dirlat1 = dirlat - .0001;
-            dirlatcheck = (myLatLng.latitude <= dirlat) && (myLatLng.latitude >= dirlat1);
-        }
-
-        if(dirlng < dir.get(diri).longitude)
-        {
-            dirlng1 = dirlng + .0001;
-            dirlngcheck = (myLatLng.longitude >= dirlng) && (myLatLng.latitude <= dirlng1);
-        }
-        else
-        {
-            dirlng1 = dirlng - .0001;
-            dirlngcheck = (myLatLng.longitude <= dirlng) && (myLatLng.latitude >= dirlng1);
-        }
-
-
-        if(dirlatcheck && dirlngcheck)
-        {
-
-            text = ldir.get(ldiri);
-            text = text.replace("</b>", "");
-            text = text.replace("<b>", "");
-            text = text.replace("<div style=", "");
-            text = text.replace("font-size:0.9em", "");
-            text = text.replace(">", "");
-            text = text.replace("</div", "");
-            text = text.replace("</div]]", "");
-            text = text.replace("[[", "");
-            text = text.replace("&nbsp", "");
-            text = text.replace("]", "");
-            text = text.replace("[", "");
-            text = text.replace("Destination w", "\n"+"\n"+"Destination w");
-            text = text.replace(",", "\n"+"\n");
-
-            diri = diri + 1;
-            ldiri = ldiri + 1;
-        }
-
-
-        moveToCurrentLocation(myLatLng);
-
-    }
-
     private void moveToCurrentLocation(LatLng currentLocation)
     {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
-        // Zoom in, animating the camera.
-        mMap.animateCamera(CameraUpdateFactory.zoomIn());
-        // Zoom out to zoom level 10, animating with a duration of 2 seconds.
-
-
     }
 
     public LatLngBounds toBounds(LatLng center, double radius) {
