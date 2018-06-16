@@ -47,7 +47,7 @@
                 <LinearLayout
                     android:id="@+id/llNavDir"
                     android:layout_width="match_parent"
-                    android:layout_height="100dp"
+                    android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"
@@ -66,6 +66,7 @@
                         android:text="TextView"
                         android:textColor="@android:color/background_light"
                         android:textSize="30sp" />
+
                 </LinearLayout>
 
                 <LinearLayout
