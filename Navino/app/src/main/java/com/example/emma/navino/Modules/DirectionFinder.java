@@ -126,9 +126,9 @@ public class DirectionFinder {
                     JSONObject jsonSSL = Step.getJSONObject("start_location");
                     Double SSLlat = jsonSSL.getDouble("lat");
                     Double SSLlng = jsonSSL.getDouble("lng");
-                    Double Midlat = (SSLlat + SELlat)/2;
-                    Double Midlng = (SELlng + SSLlng)/2;
-                    LatLng SMpoint = new LatLng(Midlat, Midlng);
+                    Double Midlat = SELlat - SSLlat;
+                    Double Midlng = SELlng - SSLlng;
+                    LatLng SMpoint = new LatLng(Midlat, Midlat);
                     Boolean ft = false;
                     Boolean mi = false;
                     LatLng Spoint = new LatLng(SELlat, SELlng);

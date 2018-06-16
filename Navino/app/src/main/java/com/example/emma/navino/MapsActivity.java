@@ -215,16 +215,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mUiSettings.setZoomControlsEnabled(true);
         LatLng current = new LatLng(lat, lon);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 18));
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         mMap.setMyLocationEnabled(true);
         llMapActionContainer.setVisibility(View.VISIBLE);
         YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
@@ -402,11 +392,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llNavDirContainer);
         txtDirections.setText(text);
         //is destination name stored somewhere?
-        t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-
+        t1.speak("Starting Directions to ", TextToSpeech.QUEUE_FLUSH, null);
         getLocation();
         LatLng currentLocation = new LatLng(lat, lon);
-
         int i = 0;
         System.out.println(inKnownArea+" "+userBounds.size());
         while (inKnownArea == false && i < userBounds.size()){
@@ -445,23 +433,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         inKnownArea = false;
                     }
                 }
-            if(!(diri == dir.size()))
-            {  double dirlat = Math.round(dir.get(diri).latitude * 1000.0)/1000.0;
-                double dirlng = Math.round(dir.get(diri).longitude * 1000.0)/1000.0;
+                double dirlat = Math.round(dir.get(diri).latitude * 10000.0);
+                double dirlng = Math.round(dir.get(diri).longitude * 10000.0);
                 double dirlat1;
                 double dirlng1;
                 Boolean dirlatcheck = false;
                 Boolean dirlngcheck = false;
+                if (dirlat < dir.get(diri).latitude) {
+                    dirlat1 = dirlat + .0001;
+                    dirlatcheck = (currentLocation.latitude >= dirlat) && (currentLocation.latitude <= dirlat1);
+                } else {
+                    dirlat1 = dirlat - .0001;
+                    dirlatcheck = (currentLocation.latitude <= dirlat) && (currentLocation.latitude >= dirlat1);
+                }
 
+                if (dirlng < dir.get(diri).longitude) {
+                    dirlng1 = dirlng + .0001;
+                    dirlngcheck = (currentLocation.longitude >= dirlng) && (currentLocation.latitude <= dirlng1);
+                } else {
+                    dirlng1 = dirlng - .0001;
+                    dirlngcheck = (currentLocation.longitude <= dirlng) && (currentLocation.latitude >= dirlng1);
+                }
 
-                dirlat1 = dirlat + .001;
-                dirlat = dirlat - .001;
-                dirlatcheck = (currentLocation.latitude >= dirlat) && (currentLocation.latitude <= dirlat1);
-
-
-                dirlng1 = dirlng + .001;
-                dirlng = dirlng - .001;
-                dirlngcheck = (currentLocation.longitude >= dirlng) && (currentLocation.longitude <= dirlng1);
 
                 if (dirlatcheck && dirlngcheck) {
 
@@ -479,36 +472,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     text = text.replace("[", "");
                     text = text.replace("Destination w", "\n" + "\n" + "Destination w");
                     text = text.replace(",", "\n" + "\n");
-                    text = text.replace("&nbsp;", " ");
-
-                    txtDirections.setText(text);
-                    t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
 
                     diri = diri + 1;
                     ldiri = ldiri + 1;
-
-
                 }
 
 
-
-
-            }
-            else
-            {
-                mMap.setPadding(0, 0, 0, 105);
-                llTopPanelContainer.setVisibility(View.VISIBLE);
-                llMapActionContainer.setVisibility(View.VISIBLE);
-                YoYo.with(Techniques.FadeIn).playOn(llTopPanelContainer);
-                YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
-                llNavDirContainer.setVisibility(View.GONE);
-                llDirectionsStartedContainer.setVisibility(View.GONE);
-                placeAutocompleteFragment.setText("");
-                mMap.clear();
-            }
                 moveToCurrentLocation(currentLocation);
             }
-
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -698,6 +669,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         originMarkers = new ArrayList<Marker>();
         destinationMarkers = new ArrayList<Marker>();
 
+
         for (Route route : routes) {
             for(int i = 0; i < route.directions.size(); i++)
             {
@@ -741,10 +713,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         text = text.replace("]", "");
         text = text.replace("Destination w", "\n"+"\n"+"Destination w");
         text = text.replace(",", "\n"+"\n");
-        text = text.replace("&nbsp;", " ");
-
-        diri = diri + 1;
-        ldiri = ldiri + 1;
     }
 
 
@@ -821,7 +789,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void moveToCurrentLocation(LatLng currentLocation)
     {
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
     }
 
     public LatLngBounds toBounds(LatLng center, double radius) {
