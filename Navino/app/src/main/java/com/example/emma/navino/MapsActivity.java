@@ -215,6 +215,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mUiSettings.setZoomControlsEnabled(true);
         LatLng current = new LatLng(lat, lon);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 18));
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         mMap.setMyLocationEnabled(true);
         llMapActionContainer.setVisibility(View.VISIBLE);
         YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
@@ -392,20 +402,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llNavDirContainer);
         txtDirections.setText(text);
         //is destination name stored somewhere?
-        t1.speak("Starting Directions to ", TextToSpeech.QUEUE_FLUSH, null);
+        t1.speak("Starting Directions", TextToSpeech.QUEUE_FLUSH, null);
         getLocation();
         LatLng currentLocation = new LatLng(lat, lon);
         int i = 0;
-        System.out.println(inKnownArea+" "+userBounds.size());
         while (inKnownArea == false && i < userBounds.size()){
             LatLngBounds b = userBounds.get(i);
             if (b.contains(currentLocation)){
                 inKnownArea = true;
             }
+            else{
+                inKnownArea=false;
+            }
             i++;
         }
         if (inKnownArea){
             t1.speak("Muting directions until out of known area.", TextToSpeech.QUEUE_ADD, null);
+        }
+        else if(!inKnownArea) {
+            t1.speak(text, TextToSpeech.QUEUE_ADD, null);
         }
         LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -472,9 +487,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     text = text.replace("[", "");
                     text = text.replace("Destination w", "\n" + "\n" + "Destination w");
                     text = text.replace(",", "\n" + "\n");
+                    text = text.replace("&nbsp;", " ");
+
+                    txtDirections.setText(text);
+
+                    if (!inKnownArea) {
+                        t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                    }
 
                     diri = diri + 1;
                     ldiri = ldiri + 1;
+                }
+
+                else
+                {
+                    t1.speak("Arrived at Destination", TextToSpeech.QUEUE_ADD, null);
+                    text="";
+                    mMap.setPadding(0, 0, 0, 105);
+                    llTopPanelContainer.setVisibility(View.VISIBLE);
+                    llMapActionContainer.setVisibility(View.VISIBLE);
+                    YoYo.with(Techniques.FadeIn).playOn(llTopPanelContainer);
+                    YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
+                    llNavDirContainer.setVisibility(View.GONE);
+                    llDirectionsStartedContainer.setVisibility(View.GONE);
+                    placeAutocompleteFragment.setText("");
+                    mMap.clear();
+                    t1.stop();
                 }
 
 
@@ -713,6 +751,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         text = text.replace("]", "");
         text = text.replace("Destination w", "\n"+"\n"+"Destination w");
         text = text.replace(",", "\n"+"\n");
+        text = text.replace("&nbsp;", " ");
+
+        diri = diri + 1;
+        ldiri = ldiri + 1;
     }
 
 
@@ -789,7 +831,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void moveToCurrentLocation(LatLng currentLocation)
     {
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
     }
 
     public LatLngBounds toBounds(LatLng center, double radius) {
