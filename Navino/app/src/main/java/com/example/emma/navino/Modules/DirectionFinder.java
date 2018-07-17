@@ -126,14 +126,16 @@ public class DirectionFinder {
                     JSONObject jsonSSL = Step.getJSONObject("start_location");
                     Double SSLlat = jsonSSL.getDouble("lat");
                     Double SSLlng = jsonSSL.getDouble("lng");
-                    Double Midlat = SELlat - SSLlat;
-                    Double Midlng = SELlng - SSLlng;
-                    LatLng SMpoint = new LatLng(Midlat, Midlat);
+                    Double Midlat = (SSLlat + SELlat)/2;
+                    Double Midlng = (SELlng + SSLlng)/2;
+                    LatLng SMpoint = new LatLng(Midlat, Midlng);
                     Boolean ft = false;
                     Boolean mi = false;
+                    Boolean con = false;
                     LatLng Spoint = new LatLng(SELlat, SELlng);
                     ft = SDD.contains("ft");
                     mi = SDD.contains("mi");
+                    con = SDD.contains("ontinue");
                     SDD = SDD.replace(" ft", "");
                     SDD = SDD.replace(" mi", "");
                     double result = 4;
@@ -144,33 +146,38 @@ public class DirectionFinder {
                         // Handle parse error.
                     }
 
-                   result = result / 2;
-
-                   String numberAsString = String.valueOf(result);
-                   String in =  Step.getString("html_instructions");
+                    result = result / 2;
+                    Boolean TooClose = false;
+                    String numberAsString = String.valueOf(result);
+                    String in =  Step.getString("html_instructions");
                     String all = "";
-                   if(mi)
-                   {
-                      all = "In "+ numberAsString + " mi " + in;
-                   }
-                   else if(ft)
-                   {
-                       all = "In " + numberAsString + " ft " + in;
-                   }
-                   else
-                   {
-                       all = "In " + numberAsString + " ft " + in;
-                   }
+                    if(mi)
+                    {
+                        all = "In "+ numberAsString + " mi " + in;
+                    }
+                    else if(ft)
+                    {
+                        all = "In " + numberAsString + " ft " + in;
+                        if( result < 19)
+                        {
+                            TooClose = true;
+                        }
+                    }
+                    else
+                    {
+                        all = "In " + numberAsString + " ft " + in;
+                    }
 
-                   direct.add(new Instruct(all, SMpoint, SD));
-                   direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
+                    if(TooClose == false ||  con == false)
+                    {direct.add(new Instruct(all, SMpoint, SD));}
+                    direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
 
                 }
 
             }
             route.directions = direct;
-           //JSONObject direction = jsonLeg.getJSONObject("html_instructions");
-           // route.directions = direction.getString("text");
+            //JSONObject direction = jsonLeg.getJSONObject("html_instructions");
+            // route.directions = direction.getString("text");
             route.distance = new Distance(jsonDistance.getString("text"), jsonDistance.getInt("value"));
             route.duration = new Duration(jsonDuration.getString("text"), jsonDuration.getInt("value"));
             route.endAddress = jsonLeg.getString("end_address");

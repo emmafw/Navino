@@ -305,7 +305,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void onSignoutClick(View view) {
         mGoogleSignInClient.signOut();
-        //finish implementing once added homescreen
+        startActivity(new Intent( MapsActivity.this, MainActivity.class));
     }
 
     public void onSaveDrawingClick(View view) throws InterruptedException {
@@ -402,7 +402,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llNavDirContainer);
         txtDirections.setText(text);
         //is destination name stored somewhere?
-        t1.speak("Starting Directions", TextToSpeech.QUEUE_FLUSH, null);
+        t1.speak("Starting Directions", TextToSpeech.QUEUE_ADD, null);
+
         getLocation();
         LatLng currentLocation = new LatLng(lat, lon);
         int i = 0;
@@ -419,7 +420,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (inKnownArea){
             t1.speak("Muting directions until out of known area.", TextToSpeech.QUEUE_ADD, null);
         }
-        else if(!inKnownArea) {
+        else if (!inKnownArea){
             t1.speak(text, TextToSpeech.QUEUE_ADD, null);
         }
         LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -448,60 +449,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         inKnownArea = false;
                     }
                 }
-                double dirlat = Math.round(dir.get(diri).latitude * 10000.0);
-                double dirlng = Math.round(dir.get(diri).longitude * 10000.0);
-                double dirlat1;
-                double dirlng1;
-                Boolean dirlatcheck = false;
-                Boolean dirlngcheck = false;
-                if (dirlat < dir.get(diri).latitude) {
-                    dirlat1 = dirlat + .0001;
+                if(!(diri == dir.size()))
+                {  double dirlat = Math.round(dir.get(diri).latitude * 1000.0)/1000.0;
+                    double dirlng = Math.round(dir.get(diri).longitude * 1000.0)/1000.0;
+                    double dirlat1;
+                    double dirlng1;
+                    Boolean dirlatcheck = false;
+                    Boolean dirlngcheck = false;
+
+                    dirlat1 = dirlat + .005;
+                    dirlat = dirlat - .005;
                     dirlatcheck = (currentLocation.latitude >= dirlat) && (currentLocation.latitude <= dirlat1);
-                } else {
-                    dirlat1 = dirlat - .0001;
-                    dirlatcheck = (currentLocation.latitude <= dirlat) && (currentLocation.latitude >= dirlat1);
-                }
-
-                if (dirlng < dir.get(diri).longitude) {
-                    dirlng1 = dirlng + .0001;
-                    dirlngcheck = (currentLocation.longitude >= dirlng) && (currentLocation.latitude <= dirlng1);
-                } else {
-                    dirlng1 = dirlng - .0001;
-                    dirlngcheck = (currentLocation.longitude <= dirlng) && (currentLocation.latitude >= dirlng1);
-                }
 
 
-                if (dirlatcheck && dirlngcheck) {
+                    dirlng1 = dirlng + .005;
+                    dirlng = dirlng - .005;
+                    dirlngcheck = (currentLocation.longitude >= dirlng) && (currentLocation.longitude <= dirlng1);
 
-                    text = ldir.get(ldiri);
-                    text = text.replace("</b>", "");
-                    text = text.replace("<b>", "");
-                    text = text.replace("<div style=", "");
-                    text = text.replace("font-size:0.9em", "");
-                    text = text.replace(">", "");
-                    text = text.replace("</div", "");
-                    text = text.replace("</div]]", "");
-                    text = text.replace("[[", "");
-                    text = text.replace("&nbsp", "");
-                    text = text.replace("]", "");
-                    text = text.replace("[", "");
-                    text = text.replace("Destination w", "\n" + "\n" + "Destination w");
-                    text = text.replace(",", "\n" + "\n");
-                    text = text.replace("&nbsp;", " ");
+                    if (dirlatcheck && dirlngcheck) {
 
-                    txtDirections.setText(text);
+                        text = ldir.get(ldiri);
+                        text = text.replace("</b>", "");
+                        text = text.replace("<b>", "");
+                        text = text.replace("<div style=", "");
+                        text = text.replace("font-size:0.9em", "");
+                        text = text.replace(">", "");
+                        text = text.replace("</div", "");
+                        text = text.replace("</div]]", "");
+                        text = text.replace("[[", "");
+                        text = text.replace("&nbsp", "");
+                        text = text.replace("]", "");
+                        text = text.replace("[", "");
+                        text = text.replace("Destination w", "\n" + "\n" + "Destination w");
+                        text = text.replace(",", "\n" + "\n");
+                        text = text.replace("&nbsp;", " ");
 
-                    if (!inKnownArea) {
-                        t1.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                        txtDirections.setText(text);
+
+                        if (!inKnownArea) {
+                            t1.speak(text, TextToSpeech.QUEUE_ADD, null);
+                        }
+
+                        diri = diri + 1;
+                        ldiri = ldiri + 1;
                     }
-
-                    diri = diri + 1;
-                    ldiri = ldiri + 1;
                 }
-
                 else
                 {
-                    t1.speak("Arrived at Destination", TextToSpeech.QUEUE_ADD, null);
+                    t1.speak("Arrived at Destination", TextToSpeech.QUEUE_ADD, null);;
                     text="";
                     mMap.setPadding(0, 0, 0, 105);
                     llTopPanelContainer.setVisibility(View.VISIBLE);
@@ -514,8 +509,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     mMap.clear();
                     t1.stop();
                 }
-
-
                 moveToCurrentLocation(currentLocation);
             }
 
@@ -706,7 +699,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         polylinePaths = new ArrayList<Polyline>();
         originMarkers = new ArrayList<Marker>();
         destinationMarkers = new ArrayList<Marker>();
-
 
         for (Route route : routes) {
             for(int i = 0; i < route.directions.size(); i++)
