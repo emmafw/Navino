@@ -158,9 +158,10 @@ public class DirectionFinder {
                     else if(ft)
                     {
                         all = "In " + numberAsString + " ft " + in;
-                        if( result < 19)
+                        if( result < 500)
                         {
                             TooClose = true;
+                            con = true;
                         }
                     }
                     else
@@ -168,7 +169,7 @@ public class DirectionFinder {
                         all = "In " + numberAsString + " ft " + in;
                     }
 
-                    if(TooClose == false ||  con == false)
+                    if(TooClose == false &&  con == false)
                     {direct.add(new Instruct(all, SMpoint, SD));}
                     direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
 
@@ -184,6 +185,8 @@ public class DirectionFinder {
             route.startAddress = jsonLeg.getString("start_address");
             route.startLocation = new LatLng(jsonStartLocation.getDouble("lat"), jsonStartLocation.getDouble("lng"));
             route.endLocation = new LatLng(jsonEndLocation.getDouble("lat"), jsonEndLocation.getDouble("lng"));
+            route.Elat= jsonEndLocation.getDouble("lat");
+            route.Elng = jsonEndLocation.getDouble("lng");
             route.points = decodePolyLine(overview_polylineJson.getString("points"));
 
             routes.add(route);

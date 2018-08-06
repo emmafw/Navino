@@ -109,6 +109,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<LatLng> dir = new ArrayList<LatLng>();
     private ImageButton clear;
     private List<LatLngBounds> userBounds = new ArrayList<LatLngBounds>();
+    private Double Elat;
+    private Double Elng;
     private boolean inKnownArea;
 
     @Override
@@ -121,7 +123,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         inKnownArea = false;
-
+        Elat = 0.0;
+        Elng = 0.0;
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             //buildAlertMessageNoGps();
@@ -401,6 +404,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         YoYo.with(Techniques.FadeIn).playOn(llDirectionsStartedContainer);
         YoYo.with(Techniques.FadeIn).playOn(llNavDirContainer);
         txtDirections.setText(text);
+        final int[] count = {0};
         //is destination name stored somewhere?
         t1.speak("Starting Directions", TextToSpeech.QUEUE_ADD, null);
 
@@ -434,7 +438,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
+        LocationListener LL = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 double latitude = location.getLatitude();
@@ -449,6 +453,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         inKnownArea = false;
                     }
                 }
+                double Endlat = Math.round(Elat * 1000.0)/1000.0;
+                double Endlng = Math.round(Elng * 1000.0)/1000.0;
+                double Endlat1;
+                double Endlng1;
+                Boolean Endlatcheck = false;
+                Boolean Endlngcheck = false;
+
+
+                Endlat1 = Endlat + .005;
+                Endlat = Endlat - .005;
+                Endlatcheck = (currentLocation.latitude >= Endlat) && (currentLocation.latitude <= Endlat1);
+
+
+                Endlng1 = Endlng + .005;
+                Endlng = Endlng - .005;
+                Endlngcheck = (currentLocation.longitude >= Endlng) && (currentLocation.longitude <= Endlng1);
+
                 if(!(diri == dir.size()))
                 {  double dirlat = Math.round(dir.get(diri).latitude * 1000.0)/1000.0;
                     double dirlng = Math.round(dir.get(diri).longitude * 1000.0)/1000.0;
@@ -457,13 +478,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Boolean dirlatcheck = false;
                     Boolean dirlngcheck = false;
 
-                    dirlat1 = dirlat + .005;
-                    dirlat = dirlat - .005;
+                    dirlat1 = dirlat + .001;
+                    dirlat = dirlat - .001;
                     dirlatcheck = (currentLocation.latitude >= dirlat) && (currentLocation.latitude <= dirlat1);
 
 
-                    dirlng1 = dirlng + .005;
-                    dirlng = dirlng - .005;
+                    dirlng1 = dirlng + .001;
+                    dirlng = dirlng - .001;
                     dirlngcheck = (currentLocation.longitude >= dirlng) && (currentLocation.longitude <= dirlng1);
 
                     if (dirlatcheck && dirlngcheck) {
@@ -494,21 +515,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         ldiri = ldiri + 1;
                     }
                 }
-                else
-                {
-                    t1.speak("Arrived at Destination", TextToSpeech.QUEUE_ADD, null);;
-                    text="";
-                    mMap.setPadding(0, 0, 0, 105);
-                    llTopPanelContainer.setVisibility(View.VISIBLE);
-                    llMapActionContainer.setVisibility(View.VISIBLE);
-                    YoYo.with(Techniques.FadeIn).playOn(llTopPanelContainer);
-                    YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
-                    llNavDirContainer.setVisibility(View.GONE);
-                    llDirectionsStartedContainer.setVisibility(View.GONE);
-                    placeAutocompleteFragment.setText("");
-                    mMap.clear();
-                    t1.stop();
-                }
+
+                if (Endlatcheck && Endlngcheck)
+                    {
+                        t1.speak("Arrived at Destination", TextToSpeech.QUEUE_ADD, null);
+                        ;
+                        text = "Arrived at Destination";
+                        txtDirections.setText(text);
+                        llTopPanelContainer.setVisibility(View.VISIBLE);
+                        llMapActionContainer.setVisibility(View.VISIBLE);
+                        YoYo.with(Techniques.FadeIn).playOn(llTopPanelContainer);
+                        YoYo.with(Techniques.FadeIn).playOn(llMapActionContainer);
+                        llNavDirContainer.setVisibility(View.GONE);
+                        llDirectionsStartedContainer.setVisibility(View.GONE);
+                        placeAutocompleteFragment.setText("");
+                        llDirectionsFoundContainer.setVisibility(View.GONE);
+                        mMap.clear();
+                        getLocation();
+                        LatLng current = new LatLng(lat, lon);
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 18));
+                        Elat = 1.0;
+
+                    }
+
                 moveToCurrentLocation(currentLocation);
             }
 
@@ -526,7 +555,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onProviderDisabled(String provider) {
 
             }
-        });
+
+        };
+        if(count[0] == 0)
+        {lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, LL);}
+
+
+
 
     }
 
@@ -694,7 +729,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onDirectionFinderSuccess(List<Route> routes) {
         //System.out.println("Routes is: "+routes.toString());
-
+        diri = 0;
+        ldiri = 0;
         progressDialog.dismiss();
         polylinePaths = new ArrayList<Polyline>();
         originMarkers = new ArrayList<Marker>();
@@ -705,6 +741,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             {
                 ldir.add(route.directions.get(i).getDirection().toString());
                 dir.add(route.directions.get(i).point);
+
+
             }
             System.out.println("test");
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
@@ -729,6 +767,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             System.out.println("POLYLINE IS: "+polylineOptions);
 
             polylinePaths.add(mMap.addPolyline(polylineOptions));
+            Elng = route.Elng;
+            Elat = route.Elat;
         }
 
         text = ldir.get(ldiri);
