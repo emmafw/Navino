@@ -13,3 +13,7 @@ If running Navino on a simulator current location will be a hard coded value whi
 Since current location is hard coded, features such as directions in real time will not work since the current location will not change. 
 
 Once the app is installed the user will be required to sign in using a Google account.
+
+
+Repositories used for assistance:
+https://github.com/NilaxSpaceo/GoogleMapOverlay
