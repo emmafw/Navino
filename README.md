@@ -7,6 +7,9 @@ This repository is the Android appication, iOS can be found at https://github.co
 To install this application Android Studio must be installed. Navino was developed in Android Studio 3.1.2
 Download this repository and open using Android Studio. 
 
+The user will need to generate a Google Maps API Key from https://developers.google.com/maps/documentation/android-sdk/signup
+Paste the key into the AndroidManifest under android:value. 
+
 To download the app to an Android device simply plug the device into the computer and select it from the list of connected devices after clicking run. 
 
 If running Navino on a simulator current location will be a hard coded value which can be updated in the Simulator's extended controls. 
