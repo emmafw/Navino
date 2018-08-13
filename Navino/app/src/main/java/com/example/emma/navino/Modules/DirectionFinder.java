@@ -149,11 +149,7 @@ public class DirectionFinder {
                     }
 
                     result = result / 2;
-<<<<<<< HEAD
-
-=======
                     Boolean TooClose = false;
->>>>>>> 8c40ea59a9a6d4298c8e6ce2d0e5918bdd596a10
                     String numberAsString = String.valueOf(result);
                     String in =  Step.getString("html_instructions");
                     String all = "";
@@ -164,26 +160,20 @@ public class DirectionFinder {
                     else if(ft)
                     {
                         all = "In " + numberAsString + " ft " + in;
-<<<<<<< HEAD
-=======
                         if( result < 500)
                         {
                             TooClose = true;
                             con = true;
                         }
->>>>>>> 8c40ea59a9a6d4298c8e6ce2d0e5918bdd596a10
                     }
                     else
                     {
                         all = "In " + numberAsString + " ft " + in;
                     }
 
-<<<<<<< HEAD
                     direct.add(new Instruct(all, SMpoint, SD));
-=======
                     if(TooClose == false &&  con == false)
                     {direct.add(new Instruct(all, SMpoint, SD));}
->>>>>>> 8c40ea59a9a6d4298c8e6ce2d0e5918bdd596a10
                     direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
 
                 }
