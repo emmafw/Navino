@@ -133,9 +133,11 @@ public class DirectionFinder {
                     LatLng SMpoint = new LatLng(Midlat, Midlng);
                     Boolean ft = false;
                     Boolean mi = false;
+                    Boolean con = false;
                     LatLng Spoint = new LatLng(SELlat, SELlng);
                     ft = SDD.contains("ft");
                     mi = SDD.contains("mi");
+                    con = SDD.contains("ontinue");
                     SDD = SDD.replace(" ft", "");
                     SDD = SDD.replace(" mi", "");
                     double result = 4;
@@ -147,7 +149,11 @@ public class DirectionFinder {
                     }
 
                     result = result / 2;
+<<<<<<< HEAD
 
+=======
+                    Boolean TooClose = false;
+>>>>>>> 8c40ea59a9a6d4298c8e6ce2d0e5918bdd596a10
                     String numberAsString = String.valueOf(result);
                     String in =  Step.getString("html_instructions");
                     String all = "";
@@ -158,13 +164,26 @@ public class DirectionFinder {
                     else if(ft)
                     {
                         all = "In " + numberAsString + " ft " + in;
+<<<<<<< HEAD
+=======
+                        if( result < 500)
+                        {
+                            TooClose = true;
+                            con = true;
+                        }
+>>>>>>> 8c40ea59a9a6d4298c8e6ce2d0e5918bdd596a10
                     }
                     else
                     {
                         all = "In " + numberAsString + " ft " + in;
                     }
 
+<<<<<<< HEAD
                     direct.add(new Instruct(all, SMpoint, SD));
+=======
+                    if(TooClose == false &&  con == false)
+                    {direct.add(new Instruct(all, SMpoint, SD));}
+>>>>>>> 8c40ea59a9a6d4298c8e6ce2d0e5918bdd596a10
                     direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
 
                 }
@@ -179,6 +198,8 @@ public class DirectionFinder {
             route.startAddress = jsonLeg.getString("start_address");
             route.startLocation = new LatLng(jsonStartLocation.getDouble("lat"), jsonStartLocation.getDouble("lng"));
             route.endLocation = new LatLng(jsonEndLocation.getDouble("lat"), jsonEndLocation.getDouble("lng"));
+            route.Elat= jsonEndLocation.getDouble("lat");
+            route.Elng = jsonEndLocation.getDouble("lng");
             route.points = decodePolyLine(overview_polylineJson.getString("points"));
 
             routes.add(route);
