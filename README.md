@@ -20,3 +20,4 @@ Once the app is installed the user will be required to sign in using a Google ac
 
 Repositories used for assistance:
 https://github.com/NilaxSpaceo/GoogleMapOverlay
+https://github.com/hiepxuan2008/GoogleMapDirectionSimple
