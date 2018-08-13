@@ -1,5 +1,7 @@
 package com.example.emma.navino.Modules;
 
+//https://github.com/hiepxuan2008/GoogleMapDirectionSimple
+
 import android.os.AsyncTask;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -126,9 +128,9 @@ public class DirectionFinder {
                     JSONObject jsonSSL = Step.getJSONObject("start_location");
                     Double SSLlat = jsonSSL.getDouble("lat");
                     Double SSLlng = jsonSSL.getDouble("lng");
-                    Double Midlat = SELlat - SSLlat;
-                    Double Midlng = SELlng - SSLlng;
-                    LatLng SMpoint = new LatLng(Midlat, Midlat);
+                    Double Midlat = (SSLlat + SELlat)/2;
+                    Double Midlng = (SELlng + SSLlng)/2;
+                    LatLng SMpoint = new LatLng(Midlat, Midlng);
                     Boolean ft = false;
                     Boolean mi = false;
                     LatLng Spoint = new LatLng(SELlat, SELlng);
@@ -144,33 +146,33 @@ public class DirectionFinder {
                         // Handle parse error.
                     }
 
-                   result = result / 2;
+                    result = result / 2;
 
-                   String numberAsString = String.valueOf(result);
-                   String in =  Step.getString("html_instructions");
+                    String numberAsString = String.valueOf(result);
+                    String in =  Step.getString("html_instructions");
                     String all = "";
-                   if(mi)
-                   {
-                      all = "In "+ numberAsString + " mi " + in;
-                   }
-                   else if(ft)
-                   {
-                       all = "In " + numberAsString + " ft " + in;
-                   }
-                   else
-                   {
-                       all = "In " + numberAsString + " ft " + in;
-                   }
+                    if(mi)
+                    {
+                        all = "In "+ numberAsString + " mi " + in;
+                    }
+                    else if(ft)
+                    {
+                        all = "In " + numberAsString + " ft " + in;
+                    }
+                    else
+                    {
+                        all = "In " + numberAsString + " ft " + in;
+                    }
 
-                   direct.add(new Instruct(all, SMpoint, SD));
-                   direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
+                    direct.add(new Instruct(all, SMpoint, SD));
+                    direct.add(new Instruct(Step.getString("html_instructions"),Spoint, SD));
 
                 }
 
             }
             route.directions = direct;
-           //JSONObject direction = jsonLeg.getJSONObject("html_instructions");
-           // route.directions = direction.getString("text");
+            //JSONObject direction = jsonLeg.getJSONObject("html_instructions");
+            // route.directions = direction.getString("text");
             route.distance = new Distance(jsonDistance.getString("text"), jsonDistance.getInt("value"));
             route.duration = new Duration(jsonDuration.getString("text"), jsonDuration.getInt("value"));
             route.endAddress = jsonLeg.getString("end_address");

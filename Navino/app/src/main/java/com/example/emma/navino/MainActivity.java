@@ -1,5 +1,7 @@
 package com.example.emma.navino;
 
+//https://firebase.google.com/docs/auth/android/google-signin
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;

@@ -31,9 +31,9 @@ import java.util.LinkedList;
         }
 
 
-        public OnDragListener getOnDragListener() {
+        /*public OnDragListener getOnDragListener() {
             return onDragListener;
-        }
+        }*/
 
         public void setOnDragListener(OnDragListener onDragListener) {
             this.onDragListener = onDragListener;
@@ -200,31 +200,31 @@ import java.util.LinkedList;
             return pointXMin;
         }
 
-        public void setPointXMin(Point pointXMin) {
+        /*public void setPointXMin(Point pointXMin) {
             this.pointXMin = pointXMin;
-        }
+        }*/
 
         public Point getPointYmin() {
             return pointYmin;
         }
 
-        public void setPointYmin(Point pointYmin) {
+        /*public void setPointYmin(Point pointYmin) {
             this.pointYmin = pointYmin;
-        }
+        }*/
 
         public Point getPointxMax() {
             return pointxMax;
         }
 
-        public void setPointxMax(Point pointxMax) {
+        /*public void setPointxMax(Point pointxMax) {
             this.pointxMax = pointxMax;
-        }
+        }*/
 
         public Point getPointYmax() {
             return pointYmax;
         }
 
-        public void setPointYmax(Point pointYmax) {
+        /*public void setPointYmax(Point pointYmax) {
             this.pointYmax = pointYmax;
-        }
+        }*/
     }

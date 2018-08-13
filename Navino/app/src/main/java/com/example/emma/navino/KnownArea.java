@@ -1,5 +1,7 @@
 package com.example.emma.navino;
 
+//class to make saving bounds to Firebase database simpler
+
 public class KnownArea {
     public double nLat, nLon, sLat, sLon;
 
